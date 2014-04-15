@@ -13,7 +13,7 @@
     </head>
     <body>
 		
-		<div id = "title">Colors Test</div> 
+		<div id = "title">Hue</div> 
 		<div id = "subtitle"><strong></strong></div>
 		<div id = "label1">Occurance of Color in each image</div>
 		
@@ -52,8 +52,6 @@
 	var bounded_data = [];
 	var svg;
 	var projection;
-	var lower = 0;		
-	var upper = 900;
 	var geoJSON;
 	var path;
 	var lightBoxShown = false;
@@ -63,10 +61,10 @@
 		initializeSVG();
 		bindHandlers();
 				
-		d3.csv('cambridge_combined.csv', function(data){
+		d3.csv('cambridge_huegroups1.csv', function(data){
 			dataset = data;
 			
-			bound_data(lower,upper);
+			bound_data();
 			generateVis();
 			generateMap();
 			
@@ -109,14 +107,14 @@
 	    };
 	}
 
-	function bound_data(lower, upper){
+	function bound_data(){
 		
 		bounded_data = [];
 		for(var i in dataset){
-			var frequency = parseFloat(dataset[i].bluecount);
-			if (frequency < upper && frequency > lower){
-				bounded_data.push(dataset[i])
-			}
+			var frequency = dataset[i]["huegroup"];
+			frequency = JSON.parse(frequency)
+			//console.log(frequency)
+			bounded_data.push(dataset[i])
 		}
 		console.log(bounded_data,bounded_data.length);
 		$('#mapSVG').empty();
@@ -135,7 +133,7 @@
 				var maxHeight = $('#barchart').height();
 				var lowerValue = sliderScale(ui.values[0]);
 				var upperValue = sliderScale(ui.values[1]);
-				console.log(lowerValue, upperValue);
+				//console.log(lowerValue, upperValue);
 				bound_data(lowerValue, upperValue);
 				
 			}
@@ -157,10 +155,14 @@
 		});
 	}
 	
+	//each group is 6 degrees
+	var highlightHueMin = 0;
+	var highlightHueMax = 10
+	
 	
 	var sliderScale = d3.scale.linear()
 	.domain([0,100])
-	.range([0,850]);
+	.range([0,1000]);
 	
 	
 	var yScale = d3.scale.linear()
@@ -178,9 +180,16 @@
 			.append("rect")
 			.attr("width",20)
 			.attr("x",40)			
-			.attr("y",function(d){return yScale(parseFloat(d.redcount))})
+			.attr("y",function(d){
+				var y = JSON.parse(d["huegroup"])[0]
+				console.log(y)
+				return yScale(y)
+			})
 			.attr("height", 2)
-			.attr("fill", "#f00")
+			.attr("fill", function(d){
+				return "#000"
+				//return d3.hsl(0,.5,.5)
+			})
 			.attr("opacity",0.01)
 			.on('mouseover', function(d){
 				$('#location_stats').html(d.lat + " " + d.lng);
@@ -188,7 +197,6 @@
 			.on('mouseout', function(d){
 				$('#location_stats').html('');
 			});
-			
 		var yAxis = d3.svg.axis()
 			.scale(yScale)
 			.orient("left")
@@ -209,12 +217,11 @@
 					.attr("height", h)
 					.attr("id", 'mapSVG')
 			   	 	.attr("class", "mapContainer");
-					
 		//Define map projection
 		projection = d3.geo.mercator()
-	   						   .center([-71.113251, 42.377651])
+	   						   .center([-71.152628, 42.395479])
 							   .translate([w/2, h/2])
-							   .scale([1000000]);
+							   .scale([600000]);
 		//Define path generator
 		path = d3.geo.path()
 						 .projection(projection);
@@ -225,15 +232,17 @@
 				.attr("width", w)
 				.attr("height", h);
 	}
-
+	
+	var hueDomainScale = highlightHueMax- highlightHueMin
+	
 	var rScale = d3.scale.linear()
-		.domain([0,250000])
-		.range([0,10]);
+		.domain([0,10000*hueDomainScale])
+		.range([0,20]);
 		
 				
 	function generateMap(){
 		console.log("generate map")
-		svg.selectAll("rect")
+		svg.selectAll("circle")
 		.data(dataset)
 		.enter()
 		.append("circle")
@@ -252,12 +261,21 @@
 		//.attr("r", 3)
 		.attr("r", function(d){
 		//	console.log(radius)
-			var radius = rScale(parseFloat(d.redcount))
+		var values = JSON.parse(d["huegroup"])
+		var sum = 0
+		for(var j=highlightHueMin; j<highlightHueMax;j++){
+			sum = sum + values[j]
+		}
+			var radius = rScale(sum)
 			return radius
 		})
+		//.attr("width", 1)
 		//.attr("width", 2)
-		.attr("fill","#f00")
-		.style("opacity", 0.1);
+		.attr("fill",function(d){
+			var middleH = (highlightHueMax*6 + highlightHueMin*6)/2
+			return d3.hsl(middleH,.5,.5)
+		})
+		.style("opacity", 0.01);
 	};
 	
 	function drawPolygon(){

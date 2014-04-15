@@ -1,7 +1,7 @@
 g {pointer-events: all;}
 #label1{position:absolute; top:140px;left:20px;color:#000;font-family:helvetica;font-size:11px;}
 #logo{position:absolute; bottom:10px;left:10px;}
-#title{position:absolute; top:50px;left:40px;color:#000;font-family:helvetica;font-size:28px;letter-spacing:1px;}
+#title{position:absolute; top:10px;left:40px;color:#f00;font-family:helvetica;font-size:120px;letter-spacing:1px;}
 #subtitle{position:absolute; top:90px;left:42px;color:#000;font-family:helvetica;font-size:10px;letter-spacing:1px;}
 #label1{position:absolute; top:150px;left:50px;color:#000;font-family:helvetica;font-size:10px;letter-spacing:1px;}
 #barchart{position:absolute; top:190px; left:60px; height:600px;}
@@ -38,9 +38,9 @@ g {pointer-events: all;}
 	color:none;
 }
 
-.mapContainer{position:absolute; top:20px; width: 800px; left: 250px; height:750px;border:1px #888 solid;}
+.mapContainer{position:absolute; top:20px; width: 1200px; left: 250px; height:900px; border:0px #888 solid;}
 
-div.bar{display:inline-block;width:25px;height:75px;background-color:red;}
+div.bar{display:inline-block;width:25px;height:75px;}
 .axis path{fill:none; stroke:#fff;}
 .axis line{fill:none; stroke:black;}
 .axis text{font-family:helvetica; font-size:8px;}

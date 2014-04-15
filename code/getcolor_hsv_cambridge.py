@@ -28,29 +28,29 @@ def rgb2hsv(r, g, b):
     return h,s,v
 
 #MAKE LIST OF FILES IN A DIRECTORY
-      
-   # print currentdir
-values = []
-#MAKE DICTIONARY
-valuefreq={}
-#OPEN FILES IN LIST AND GET COLOR
-basepath = '/Users/jiazhang/Documents/GitHub/streetviewcolor/'
-with open(basepath+'manhattan.csv', 'w') as csvfile:
-    spamwriter = csv.writer(csvfile)
-    print "open"
-    for path, subirs, files in os.walk(r'/Users/jiazhang/Documents/GitHub/streetview_downloader/manhattan'):
+folderNumber = 0
+
+for folderNumber in range(0, 42):
+    print folderNumber
+    for path, subirs, files in os.walk(r'/Users/jiazhang/Documents/GitHub/streetview_downloader/cambridge-split/images-'+str(folderNumber)):
+        currentdir = []
         files = [f for f in files if not f[0] == '.']
         for filename in files:
-            file = os.path.join(path, filename)
+            #JOIN NAME WITH PATH
+            f = os.path.join(path, filename)
+            currentdir.append(f)       
+       # print currentdir
+    folderNumber = folderNumber+1
+    values = []
+    #MAKE DICTIONARY
+    valuefreq={}
+    #OPEN FILES IN LIST AND GET COLOR
+    basepath = '/Users/jiazhang/Documents/GitHub/streetviewcolor/'
+    with open(basepath+'cambridge_hsv'+str(folderNumber)+'.csv', 'w') as csvfile:
+        spamwriter = csv.writer(csvfile)
+        print "open"
+        for file in currentdir:
             #print file
-            redcount = 0
-            bluecount = 0
-            greencount = 0
-            samecount = 0
-        
-            redgreen = 0
-            redblue = 0
-            greenblue = 0
             image = Image.open(file)
             width, height = image.size
             imgstat = os.stat(file)
@@ -104,5 +104,5 @@ with open(basepath+'manhattan.csv', 'w') as csvfile:
             #print lat, lng
             total = redcount+greencount+bluecount+samecount+greenblue+redblue+redgreen
             imagedata = [h,s,v, lat, lng]
-            print imagedata
+            #print imagedata
             spamwriter.writerow(imagedata)

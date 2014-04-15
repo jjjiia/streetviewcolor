@@ -13,7 +13,7 @@
     </head>
     <body>
 		
-		<div id = "title">Colors Test</div> 
+		<div id = "title">R</div> 
 		<div id = "subtitle"><strong></strong></div>
 		<div id = "label1">Occurance of Color in each image</div>
 		
@@ -32,7 +32,7 @@
 		</div>
 
 		<div id="footer">
-	        <span id="data-source" class='footer-highlight'> Data Source</span>
+	        <span id="data-source" class='footer-highlight'></span>
 	    </div>
 
 	    <div id='data-lightbox'>
@@ -57,7 +57,9 @@
 	var geoJSON;
 	var path;
 	var lightBoxShown = false;
-
+	
+	var currentRGB = "redcount"
+	var color = "#f00"
 //redcount,redcount,redcount,redcount,redcount,redcount,redcount,total,lat,lng
 
 	d3.json('nyc-borough-boundaries-polygon.geojson',function(geojson){
@@ -65,7 +67,7 @@
 		initializeSVG();
 		bindHandlers();
 				
-		d3.csv('NewYork5.csv', function(data){
+		d3.csv('manhattan_rgb/manhattan_all.csv', function(data){
 			dataset = data;
 			
 			bound_data(lower,upper);
@@ -121,7 +123,7 @@
 		
 		bounded_data = [];
 		for(var i in dataset){
-			var frequency = parseFloat(dataset[i].redcount);
+			var frequency = parseFloat(dataset[i][currentRGB]);
 			if (frequency < upper && frequency > lower){
 				bounded_data.push(dataset[i])
 			}
@@ -186,10 +188,10 @@
 			.append("rect")
 			.attr("width",20)
 			.attr("x",40)			
-			.attr("y",function(d){return yScale(parseFloat(d.redcount))})
+			.attr("y",function(d){return yScale(parseFloat(d[currentRGB]))})
 			.attr("height", 2)
-			.attr("fill", "#f00")
-			.attr("opacity",0.01)
+			.attr("fill", color)
+			.attr("opacity",0.005)
 			.on('mouseover', function(d){
 				$('#location_stats').html(d.lat + " " + d.lng);
 			})
@@ -220,9 +222,9 @@
 					
 		//Define map projection
 		projection = d3.geo.mercator()
-	   						   .center([-74.01, 40.762])
+	   						   .center([-74.038428, 40.833144])
 							   .translate([w/2, h/2])
-							   .scale([620000]);
+							   .scale([200000]);
 		//Define path generator
 		path = d3.geo.path()
 						 .projection(projection);
@@ -236,7 +238,7 @@
 
 	var rScale = d3.scale.linear()
 		.domain([0,160000])
-		.range([0,10]);
+		.range([0,5]);
 		
 				
 	function generateMap(){
@@ -249,10 +251,10 @@
 		//.attr("cy", 20)
 		.attr("cy", function(d){return projection([parseFloat(d.lng), parseFloat(d.lat)])[1];})
 		//.attr("r", 3)
-		.attr("r", function(d){return rScale(parseFloat(d.redcount))})
+		.attr("r", function(d){return rScale(parseFloat(d[currentRGB]))})
 		//.attr("width", 2)
-		.attr("fill","#f00")
-		.style("opacity", 0.05);
+		.attr("fill",color)
+		.style("opacity", 0.01);
 	};
 	
 	function drawPolygon(){
