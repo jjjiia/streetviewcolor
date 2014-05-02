@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin: auto;
+  position: relative;
+  width: 960px;
+}
+
+text {
+  font: 10px sans-serif;
+}
+
+form {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
+
+</style>
+<form>
+  <label><input type="radio" name="dataset" value="s" checked> s</label>
+  <label><input type="radio" name="dataset" value="v">v</label>
+</form>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var width = 960,
+    height = 500,
+    radius = Math.min(width, height) / 2;
+
+var color = d3.scale.category20();
+
+var pie = d3.layout.pie()
+    .value(function(d) { return d.s; })
+    .sort(null);
+
+var arc = d3.svg.arc()
+    .innerRadius(radius - 100)
+    .outerRadius(radius - 20);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+d3.csv("test.csv", function(error, data) {
+	
+	console.log(data)
+	data.sort(function(a,b) {return (a["s"]+a["v"]) - (b["s"]+b["v"]);});
+	data.reverse()
+	console.log(data.length)
+	
+  var path = svg.datum(data).selectAll("path")
+      .data(data)
+    	.enter().append("path")
+      .attr("fill", function(d) { 
+  		//return "red"
+  		var s = d["s"]*0.01
+  		var l = d["v"]*0.01
+  		console.log(s,l)
+  		return  d3.hsl(1,s,l)
+		})
+      .attr("d", arc);
+
+  d3.selectAll("input")
+      .on("change", change);
+
+  var timeout = setTimeout(function() {
+    d3.select("input[value=\"s\"]").property("checked", true).each(change);
+  }, 2000);
+
+  function change() {
+    var value = this.value;
+    clearTimeout(timeout);
+    pie.value(function(d) { return d[value]; }); // change the value function
+    path = path.data(pie); // compute the new angles
+    path.attr("d", arc); // redraw the arcs
+  }
+});
+
+function type(d) {
+  d.s = +d.s;
+  d.v = +d.v;
+  return d;
+}
+
+</script>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font-family: "Helvetica", Helvetica, Arial, sans-serif;
+  font-size:11px;
+  margin: auto;
+  position: relative;
+  width: 95%;
+}
+
+form {
+  position: absolute;
+  left: 10px;
+  top: 25px;
+  color:#888;
+}
+
+.node {
+  font: 10px sans-serif;
+  line-height: 12px;
+  overflow: hidden;
+  position: absolute;
+  text-indent: 2px;
+}
+#city
+{
+	position:absolute;
+	left:10px;
+	top:20px;
+	color:#888;
+}
+
+</style>
+<div id="city">
+	<strong>Color Test</strong>
+</div>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var margin = {top: 50, right: 10, bottom: 10, left: 10},
+    width = 1800 - margin.left - margin.right,
+    height = 10000 - margin.top - margin.bottom;
+
+var color = d3.scale.category20c();
+
+var treemap = d3.layout.treemap()
+    .size([width, height])
+    .sticky(true)
+    .value(function(d) { return d.size; });
+	
+var heightScale = d3.scale.linear()
+.domain([0,2000])
+.range([0,1000])
+
+var svg = d3.select("body").append("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+	    .append("g")
+	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+d3.csv("test.csv", function(error, data) {
+	var reducedData = filterDataTest2(data)
+	drawRect(reducedData)
+	
+});
+
+//FILTERS
+function filterDataTest(data){
+	var reducedData = []
+	for(color in data){
+		if(data[color]["s"]+data[color]["v"]>1800){
+			reducedData.push(data[color])
+		}
+	}
+	console.log(reducedData.length, data.length, reducedData.length/data.length )
+	return reducedData
+}
+function filterDataTest2(data){
+	var reducedData = []
+	for(color in data){
+		if(data[color]["s"]> 20 && data[color]["v"]<75 && data[color]["v"]>25 ){
+			reducedData.push(data[color])
+		}
+	}
+	console.log(reducedData.length, data.length, reducedData.length/data.length )
+	return reducedData
+}
+
+//SORTING
+function sortBySum(input){
+	input.sort(function(a,b) {return (a["s"]+a["v"]) - (b["s"]+b["v"]);});
+	var output = input.reverse()
+	return output
+}
+function sortByS(input){
+	input.sort(function(a,b) {return (a["s"]) - (b["s"]);});
+	var output = input.reverse()
+	return output
+}
+
+//DRAWING
+function drawRect(reducedData){
+	reducedData = sortByS(reducedData)
+	
+	var squareSize = 10
+	svg.selectAll("rect")
+	.data(reducedData)
+	.enter()
+	.append("rect")
+	.attr("x",function(d,i){
+		return i%100*squareSize
+		})
+	.attr("y", function(d,i){
+		return parseInt(i/100)*squareSize
+	})
+	.attr("width", squareSize)
+	.attr("height", function(d,i){
+		return squareSize
+
+	})
+	.attr("fill", function(d){
+		//return "red"
+		var s = d["s"]*0.01
+		var l = d["v"]*0.01
+		//console.log(s,l)
+		return  d3.hsl(1,s,l)
+	})
+	.attr("opacity", 1)
+	.on("click", function(d){
+		console.log("s:"+ d["s"]+ "v:"+d["v"])
+	})
+}
+
+
+</script>

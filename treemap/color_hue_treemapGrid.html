@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font-family: "Helvetica", Helvetica, Arial, sans-serif;
+  font-size:11px;
+  margin: auto;
+  position: relative;
+  width: 95%;
+}
+
+form {
+  position: absolute;
+  left: 10px;
+  top: 25px;
+  color:#888;
+}
+
+.node {
+  font: 10px sans-serif;
+  line-height: 12px;
+  overflow: hidden;
+  position: absolute;
+  text-indent: 2px;
+}
+#city
+{
+	position:absolute;
+	left:10px;
+	top:20px;
+	color:#888;
+}
+
+</style>
+<div id="city">
+	<strong>Color Test</strong>
+</div>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var margin = {top: 50, right: 10, bottom: 10, left: 10},
+    width = 1800 - margin.left - margin.right,
+    height = 1000 - margin.top - margin.bottom;
+
+var color = d3.scale.category20c();
+
+var treemap = d3.layout.treemap()
+    .size([width, height])
+    .sticky(true)
+    .value(function(d) { return d.size; });
+	
+var heightScale = d3.scale.linear()
+.domain([0,2000])
+.range([0,1000])
+
+var svg = d3.select("body").append("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+	    .append("g")
+	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+d3.csv("test.csv", function(error, data) {
+	
+	data.sort(function(a,b) {return a["f"] - b["f"];});
+	data.reverse()
+	console.log(data.length)
+	
+	svg.selectAll("rect")
+	.data(data)
+	.enter()
+	.append("rect")
+	.attr("x",function(d,i){
+		//return d["v"]*10
+		return i
+		})
+	.attr("y", function(d,i){
+		return 5
+		//return d["s"]*10
+		//return parseInt(i/1000)
+	})
+	.attr("width", 1)
+	.attr("height", function(d,i){
+		return d["f"]
+		//return parseInt(i/1000)
+	})
+	.attr("fill", function(d){
+		//return "red"
+		var s = d["s"]*0.01
+		var l = d["v"]*0.01
+		//console.log(s,l)
+		return  d3.hsl(1,s,l)
+	})
+	.attr("opacity", 1)
+
+	//drawHueRect(data[0])
+});
+
+function drawHueRect(data){
+	console.log("draw")
+	svg.selectAll("rect")
+	.data(data)
+	.enter()
+	.append("rect")
+	.attr("x",function(d,i){
+		console.log(d)
+		return 10
+		return i*2%2000})
+	.attr("y", function(d,i){
+		console.log(d[0])
+		return 5
+	})
+	.attr("width", 2)
+	.attr("height", 0)
+	.attr("fill", function(d){
+		return "red"
+		return d["color"]
+	})
+	.transition()
+	.delay(function(d,i){return i})
+	.attr("height",function(d,i){
+		return 2
+		//console.log(d["frequency"])
+		//return 5
+		//return heightScale(d["frequency"])
+	})
+	.attr("opacity", 0.1)
+}
+
+</script>
