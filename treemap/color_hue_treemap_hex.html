@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font-family: "Helvetica", Helvetica, Arial, sans-serif;
+  font-size:11px;
+  margin: auto;
+  position: relative;
+  width: 95%;
+}
+
+form {
+  position: absolute;
+  left: 10px;
+  top: 25px;
+  color:#888;
+}
+
+.node {
+  font: 10px sans-serif;
+  line-height: 12px;
+  overflow: hidden;
+  position: absolute;
+  text-indent: 2px;
+}
+#city
+{
+	position:absolute;
+	left:10px;
+	top:20px;
+	color:#888;
+}
+
+</style>
+<div id="city">
+	<strong>Color Test</strong>
+</div>
+<script src="required/d3.v3.min.js"></script>
+<script src="required/jquery.min.js"></script>
+<script src="required/topojson.v1.min.js"></script>
+<script src="required/datamaps.world.min.js"></script>
+<script src="required/d3.v3.min.js"></script>
+<script src="required/topojson.v1.min.js"></script>	
+<script src="required/jquery.min.js"></script>
+<script src="required/jquery-ui.min.js"></script>
+<link href="required/bootstrap-3.1.1-dist/css/bootstrap-glyphicons.css" rel="stylesheet">
+<link rel="stylesheet" href="required/jquery-ui.css" />
+<script>
+
+var margin = {top: 50, right: 10, bottom: 10, left: 10},
+    width = 1800 - margin.left - margin.right,
+    height = 2000 - margin.top - margin.bottom;
+
+var color = d3.scale.category20c();
+
+var treemap = d3.layout.treemap()
+    .size([width, height])
+    .sticky(true)
+    .value(function(d) { return d.size; });
+	
+var heightScale = d3.scale.linear()
+.domain([0,2000])
+.range([0,1000])
+
+var svg = d3.select("body").append("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+	    .append("g")
+	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var currentStreet = "Harwell Drive.csv"
+d3.csv(currentStreet, function(error, data) {
+		console.log(data.length)
+		var reducedData = filterDataTest(data)
+		console.log(reducedData.length)
+		drawRect(reducedData)
+});
+
+//FILTERS
+function filterDataTest(data){
+	var reducedData = []
+	for(Color in data){
+		if(data[Color]["f"] > 10){
+		reducedData.push(data[Color])
+		}
+}
+	console.log(reducedData.length)
+	return reducedData
+}
+
+
+function filterByAmount(data){
+	var reducedData = []
+	sortByAmount(data)
+	reducedData = data.splict(100, data.length-100)
+	return reducedData
+		
+}
+
+//SORTING
+function sortByAmount(input){
+	input.sort(function(a,b) {return (a["f"]) - (b["f"]);});
+	var output = input.reverse()
+	return output
+}
+function sortBySum(input){
+	input.sort(function(a,b) {return (a[0]+a[1]) - (b[0]+b[1]);});
+	var output = input.reverse()
+	return output
+}
+function sortByS(input){
+	input.sort(function(a,b) {
+		var ahsl = d3.hsl(a["color"])
+		var bhsl = d3.hsl(b["color"])
+		//return ((ahsl["h"]+ahsl["s"]) - (bhsl["h"]+bhsl["s"]));
+		return ((ahsl["s"]) - (bhsl["s"]));
+		});
+	var output = input.reverse()
+	return output
+}
+
+//DRAWING
+function drawRect(reducedData){
+	sortByS(reducedData)
+	console.log(reducedData)
+	var dataLength = reducedData.length
+	var squareSize = 2
+	var svgWidth = 200
+	svg.selectAll("rect")
+		.data(reducedData)
+		.enter()
+		.append("rect")
+		//.transition()
+		//.duration(1000)
+		//.delay(function(d,i){
+		//	return i
+		//})
+		.attr("x",function(d,i){
+			return i%svgWidth*squareSize
+			})
+		.attr("y", function(d,i){
+			return parseInt(i/svgWidth)*squareSize
+		})
+		.attr("width", squareSize)
+		.attr("height", function(d,i){
+			return squareSize
+			return d["f"]*squareSize
+		})
+		.attr("fill", function(d){
+			var Color = d["color"]
+			return Color
+		})
+		.attr("opacity", function(d){
+			var f = d["f"]/10
+			return 1
+		})
+
+		
+	svg.selectAll("rect").on("click", function(d){
+		})
+}
+
+
+</script>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font-family: "Helvetica", Helvetica, Arial, sans-serif;
+  font-size:11px;
+  margin: auto;
+  position: relative;
+  width: 95%;
+}
+
+form {
+  position: absolute;
+  left: 10px;
+  top: 25px;
+  color:#888;
+}
+
+.node {
+  font: 10px sans-serif;
+  line-height: 12px;
+  overflow: hidden;
+  position: absolute;
+  text-indent: 2px;
+}
+#city
+{
+	position:absolute;
+	left:10px;
+	top:20px;
+	color:#888;
+}
+
+</style>
+<div id="city">
+	<strong>Aberdeen Street:</strong> All colors.
+</div>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var margin = {top: 50, right: 10, bottom: 10, left: 10},
+    width = 2000 - margin.left - margin.right,
+    height = 1000 - margin.top - margin.bottom;
+
+var color = d3.scale.category20c();
+
+var treemap = d3.layout.treemap()
+    .size([width, height])
+    .sticky(true)
+    .value(function(d) { return d.size; });
+	
+var heightScale = d3.scale.linear()
+.domain([0,2000])
+.range([0,1000])
+
+var svg = d3.select("body").append("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+	  .append("g")
+	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+d3.csv("/streetviewcolor/treemap_data_wholestreet/Acadia_Park.csv", function(error, data) {
+	
+	data.sort(function(a,b) {return a["frequency"] - b["frequency"];});
+	data.reverse()
+	console.log(data)
+	
+	svg.selectAll("rect")
+	.data(data)
+	.enter()
+	.append("rect")
+	.attr("x",function(d,i){
+		return i*2%2000})
+	.attr("y", 40)
+	.attr("width", 2)
+	.attr("height", 0)
+	.attr("fill", function(d){
+		return d["color"]
+	})
+	.transition()
+	.delay(function(d,i){return i})
+	.attr("height",function(d,i){
+		//console.log(d["frequency"])
+		//return 5
+		return heightScale(d["frequency"])
+	})
+});
+
+
+
+</script>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font-family: "Helvetica", Helvetica, Arial, sans-serif;
+  font-size:11px;
+  margin: auto;
+  position: relative;
+  width: 95%;
+}
+
+form {
+  position: absolute;
+  left: 10px;
+  top: 25px;
+  color:#888;
+}
+
+.node {
+  font: 10px sans-serif;
+  line-height: 12px;
+  overflow: hidden;
+  position: absolute;
+  text-indent: 2px;
+}
+#city
+{
+	position:absolute;
+	left:10px;
+	top:20px;
+	color:#888;
+}
+
+</style>
+<div id="city">
+	<strong>Color Test</strong>
+</div>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var margin = {top: 50, right: 10, bottom: 10, left: 10},
+    width = 1800 - margin.left - margin.right,
+    height = 2000 - margin.top - margin.bottom;
+
+var color = d3.scale.category20c();
+
+var treemap = d3.layout.treemap()
+    .size([width, height])
+    .sticky(true)
+    .value(function(d) { return d.size; });
+	
+var heightScale = d3.scale.linear()
+.domain([0,2000])
+.range([0,1000])
+
+var svg = d3.select("body").append("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+	    .append("g")
+	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+d3.csv("Acadia Park.csv", function(error, data) {
+	//console.log(data[3])
+	
+	for(var i = 1; i < 360; i++){
+		var reducedData = filterDataTest(data[i])
+		drawRect(reducedData, i)
+	}
+});
+
+//FILTERS
+function filterDataTest(data){
+	var reducedData = []
+	var hue = data["hue"]
+	var colors = data["color"].split("], [")
+	
+	for(color in colors){
+		var colorArray = colors[color].split(",")
+		if(parseInt(colorArray[0])>20 && parseInt(colorArray[1])> 15 && parseInt(colorArray[1])< 85){
+			reducedData.push(colorArray)
+		}
+	}
+	//console.log(reducedData.length)
+	return reducedData
+}
+
+
+//SORTING
+function sortBySum(input){
+	input.sort(function(a,b) {return (a[0]+a[1]) - (b[0]+b[1]);});
+	var output = input.reverse()
+	return output
+}
+function sortByS(input){
+	input.sort(function(a,b) {return (a["s"]) - (b["s"]);});
+	var output = input.reverse()
+	return output
+}
+
+//DRAWING
+function drawRect(reducedData, Hue){
+	reducedData = sortByS(reducedData)
+	
+	var squareSize = 3
+	svg.selectAll("circle")
+	.data(reducedData)
+	.enter()
+	.append("circle")
+	.attr("cx",function(d,i){
+		return i%500*squareSize
+		})
+	.attr("cy", function(d,i){
+		return parseInt(i/500)*squareSize+Hue
+	})
+	//.attr("width", squareSize)
+	.attr("r", function(d,i){
+		return squareSize
+
+	})
+	.attr("fill", function(d){
+		//return "red"
+		var s = d[0]*0.01
+		var l = d[1]*0.01
+		//console.log(s,l)
+		return  d3.hsl(Hue,s,l)
+	})
+	.attr("opacity", 1)
+	.on("click", function(d){
+		console.log(Hue +" s:"+ d[0]+ "v:"+d[1])
+	})
+	
+}
+
+
+</script>

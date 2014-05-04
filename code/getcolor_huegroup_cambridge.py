@@ -29,7 +29,7 @@ def rgb2hsv(r, g, b):
 
 #MAKE LIST OF FILES IN A DIRECTORY
 folderNumber = 0
-for folderNumber in range(0, 42):
+for folderNumber in range(0, 23):
     print folderNumber
     for path, subirs, files in os.walk(r'/Users/jiazhang/Documents/GitHub/streetview_downloader/cambridge-split/images-'+str(folderNumber)):
         currentdir = []

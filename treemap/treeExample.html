@@ -1,0 +1,170 @@
+jarobertson’s block #1446865 December 8, 2011
+csv filter and nest treemap
+
+Open in a new window.
+index.html#
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+   
+    <script type="text/javascript" src="http://mbostock.github.com/d3/d3.js"></script>
+    <script type="text/javascript" src="http://mbostock.github.com/d3/d3.csv.js"></script>
+    <script type="text/javascript" src="http://mbostock.github.com/d3/d3.layout.js"></script>
+    <style type="text/css">
+
+
+	
+body { text-align: center;  margin: auto; }
+p.source { font-style: italic; }
+a { color: blue; }
+
+svg {
+  display: block;
+  margin: auto;
+}
+
+text {
+  font-size: 24px;
+}
+
+rect {
+  fill: none;
+  stroke: #fff;
+}
+
+
+    </style>
+  </head>
+  <body>
+   
+    <div id="body">
+		<p><h3> Attempt at csv filter and nesting...V4</h3> 
+		<p>Filter a csv file to obtain a sub selection of interest onchange via dropdown select box.</p>	
+CSV Filter 1 - This will filter by "sec" : <select id="sec" >
+		  <option value="990" >990</option>
+          <option value="903">903</option>
+		  <option value="905">905</option>
+          <option value="907">907</option>
+		  <option value="950" >950</option>
+          <option value="2000">2000</option>
+</select> <br>
+
+
+	</div>
+    
+    <script type="text/javascript">
+var w = 300,
+    h = 300,
+	color = d3.scale.category20c(),
+    root, 
+    node,
+	master,
+	data;
+	
+var treemap = d3.layout.treemap()
+	//.round(false)
+    .size([w, h])
+    //.sticky(false)
+    .children(function(d) { return d.values; }) 
+    .value(function(d) { return d.key; }); 
+	
+var svg = d3.select("body")
+    .style("width", w + "px")
+    .style("height", h + "px")
+    .append("svg:svg")
+    //.attr("width", w)
+    //.attr("height", h)
+    .append("svg:g")
+    .attr("transform", "translate(.5,.5)");
+
+//load csv and copy to global variable	
+d3.csv("mini.csv",function(csv) {
+master=data=csv;
+init(master);
+});
+
+d3.select("#body").on("change", redraw); 
+
+function init(){
+datanest();
+datadraw();
+}
+
+function redraw(master){
+secfilter();
+//fonfilter();
+//fonfilter2(); etc etc etc
+//nestswitcher..... use switch to choose appropriate nest.
+//visswitcher..... use switch to choose appropriate vis. maybe here http://stackoverflow.com/questions/6643015/switch-and-select-in-javascript
+datanest();
+datadraw();
+}
+
+function secfilter () {
+var sect = document.getElementById("sec");
+var section = sect.options[sect.selectedIndex].value;
+	console.log ("selected section = " + section)
+	data = master.filter(function(d) { return d.sec  == section;});
+	return data;
+	}
+
+function datanest () {	
+	node = root = {values: d3.nest()
+      .key(function(d) { return d.sec; })
+      .rollup(function(d) {
+        return d.map(function(d) {
+          return {key: d.bud};
+        });
+      })
+      .entries(data)};
+	  console.log (root)
+	  return node;
+	  return root;
+	  }
+//.....TO BE BUILT SOON MULTIPLE OTHER NESTS....
+
+function datadraw() {
+
+//join data to .cell elements 
+ var cell = svg.selectAll(".cell")
+      .data(treemap.nodes(root).filter(function(d) { return !d.values; }) )
+	  treemap.sticky(true) // ****	Guessing this is something to do with it... https://github.com/mbostock/d3/issues/393
+	  
+ // enter new elements 
+  var cellEnter = cell.enter().append("g") 
+      .attr("class", "cell")
+     // .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+	  
+  cellEnter.append("rect")   
+   cellEnter.append("text") 
+  
+	  
+// update remaining elements 
+
+
+  cell.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; }) 
+  
+  cell.select("rect") 
+       .attr("width", function(d) { return d.dx - 1; })
+       .attr("height", function(d) { return d.dy - 1; })
+       .style("fill", function(d) { return color(d.parent.key); })
+    
+   cell.select("text")
+    .attr("x", function(d) { return d.dx / 2; })
+      .attr("y", function(d) { return d.dy / 2; })
+      .attr("dy", ".35em")
+      .attr("text-anchor", "middle")
+      .text(function(d) { return d.key; }) 
+	  .text(function(d) { return d.parent.key; }) 
+      .style("opacity", function(d) { d.w = this.getComputedTextLength(); return d.dx > d.w ? 1 : 0; })
+  
+ 
+// remove old elements
+  cell.exit().remove()
+	 } 
+     	   	 
+    </script>
+  </body>
+</html>

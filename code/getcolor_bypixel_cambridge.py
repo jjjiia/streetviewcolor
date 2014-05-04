@@ -59,11 +59,8 @@ for folderNumber in range(0, 42):
             imgstat = os.stat(file)
             pix = image.load()
             #print imgstat
-            #print imgstat[6]
-            #CHECK IF IMAGE IS BLANK, AND REMOVE
             colorDict = {}
-            if imgstat[6] < 4483:
-                os.remove(file)
+           
             for x in range(0,width):
                 for y in range(0,height):
                     r,g,b = pix[x,y]

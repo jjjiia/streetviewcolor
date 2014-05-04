@@ -46,7 +46,7 @@ for folderNumber in range(0, 42):
 
     #OPEN FILES IN LIST AND GET COLOR
     #  hues grouped into 6 degrees each
-    basepath = '/Users/jiazhang/Documents/GitHub/streetviewcolor/'
+    basepath = '/Users/jiazhang/Documents/GitHub/streetviewcolor/saturationNY/'
     with open(basepath+'manhattan_huegroups'+str(folderNumber)+'.csv', 'w') as csvfile:
       
         spamwriter = csv.writer(csvfile)
@@ -54,7 +54,7 @@ for folderNumber in range(0, 42):
         for file in currentdir:
             huefreq={}
             huegroup = 0
-            for huegroup in range(0,60):
+            for huegroup in range(0,100):
                 huefreq[huegroup]=0
             #print "reset",huefreq
             
@@ -75,7 +75,7 @@ for folderNumber in range(0, 42):
                     hexcode = '#'+''.join(map(chr, rgb)).encode('hex')
                     #print hexcode
                     h,s,v = rgb2hsv(r,g,b)
-                    currenthuegroup = int(h/6)
+                    currenthuegroup = int(s)
                     huefreq[currenthuegroup]= huefreq[currenthuegroup]+1
             # print huefreq
             latlng = str(file).split("_")
