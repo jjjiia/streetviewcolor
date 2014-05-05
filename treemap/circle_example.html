@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+	<style>
+
+	body {
+	  font-family: "Helvetica", Helvetica, Arial, sans-serif;
+	  font-size:14px;
+	  margin: auto;
+	  position: relative;
+	  width: 95%;
+	  letter-spacing:4px;
+	}
+	.node {
+	  font: 10px sans-serif;
+	  line-height: 12px;
+	  overflow: hidden;
+	  position: absolute;
+	  text-indent: 2px;
+	}
+	#city
+	{
+		position:absolute;
+		left:30px;
+		top:10px;
+		color:#aaa;
+	    font-size:12px;
+		cursor:pointer;
+	}
+	svg{
+		margin-top:160px;
+	}
+	</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="../common/delimited-favicon-v4.ico">
+    <title>delimited | D3 CSV to Nested JSON</title>
+	<div id="city">Color Test
+		<div id = "DrPaul">Dr. Paul Dudley White Path.csv</div>
+		<div id = "Harwell">Harwell Drive.csv</div>
+		<div id = "Alewife">Alewife T Station Access Road.csv</div>
+		<div id = "Bradbury">Bradbury Street.csv</div>
+		<div id = "Buckingham">Buckingham Place.csv</div>
+		<div id = "Edmunds">Edmunds Street.csv</div>
+		<br/>
+		<div id = "current"></div>
+		<div id = "mapContainer"></div>
+	</div>
+	<script src="required/d3.v3.min.js"></script>
+	<script src="required/jquery.min.js"></script>
+	<script src="required/topojson.v1.min.js"></script>
+	<script src="required/datamaps.world.min.js"></script>
+	<script src="required/d3.v3.min.js"></script>
+	<script src="required/topojson.v1.min.js"></script>	
+	<script src="required/jquery.min.js"></script>
+	<script src="required/jquery-ui.min.js"></script>
+	<script src="required/underscore-min.js"></script>
+
+	<link href="required/bootstrap-3.1.1-dist/css/bootstrap-glyphicons.css" rel="stylesheet">
+	<link rel="stylesheet" href="required/jquery-ui.css" />
+    <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-45101494-1']);
+    _gaq.push(['_setDomainName', 'delimited.io']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') +'.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+    </script>
+  </head>
+  <body>
+    <script>
+      //*************************************************
+      // SETUP DATA VIZ
+      //*************************************************
+	  d3.selectAll("#Alewife")
+	  .on("click", function(d){
+	  	var street = "teststreets/Alewife T Station Access Road.csv"
+	  	drawAll(street)
+	  	d3.selectAll("svg").remove()
+	  	d3.select("#current").html(street)
+	  })
+	  d3.selectAll("#DrPaul")
+	  .on("click", function(d){
+	  	var street ="teststreets/Dr. Paul Dudley White Path.csv"
+	  	drawAll(street)
+	  	d3.selectAll("svg").remove()
+	  	d3.select("#current").html(street)
+	
+	  })
+	  d3.selectAll("#Harwell")
+	  .on("click", function(d){
+	  	var street ="teststreets/Harwell Drive.csv"
+	  	drawAll(street)
+	  	d3.selectAll("svg").remove()
+	  	d3.select("#current").html(street)
+	
+	  })
+	  d3.selectAll("#Bradbury")
+	  .on("click", function(d){
+	  	var street ="teststreets/Bradbury Street.csv"
+	  	drawAll(street)
+	  	d3.selectAll("svg").remove()
+	  	d3.select("#current").html(street)
+	
+	  })
+	  d3.selectAll("#Buckingham")
+	  .on("click", function(d){
+	  	var street ="teststreets/Buckingham Place.csv"
+	  	drawAll(street)
+	  	d3.selectAll("svg").remove()
+	  	d3.select("#current").html(street)
+	
+	  })
+	  d3.selectAll("#Edmunds")
+	  .on("click", function(d){
+	  	var street ="teststreets/Edmunds Street.csv"
+	  	drawAll(street)
+	  	d3.selectAll("svg").remove()
+	  	d3.select("#current").html(street)
+	
+	  })
+	  
+      var width = 800, height = 800, radius = 300;
+
+      var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+      	.append("g")
+        .attr("transform", "translate(" + width / 2 + "," + height/2 + ")");
+
+      var partition = d3.layout.partition()
+        .sort(null)
+        .size([2 * Math.PI, radius * radius])
+        .value(function(d) { return d.f; });
+	var innerRadiusScale = d3.scale.sqrt()
+		.domain([0,800])
+		.range([0,50])
+	var outerRadiusScale = d3.scale.sqrt()
+		.domain([0,900])
+		.range([0,600])
+	var indexScale = d3.scale.linear()
+		.domain([0,20000])
+		.range([0,100])
+	var arc = d3.svg.arc()
+        .startAngle(function(d) { return d.x; })
+        .endAngle(function(d) { return d.x + d.dx; })
+        .innerRadius(function(d, i){
+			return 0
+			//return i/1000
+			//return indexScale(i)
+			return innerRadiusScale(d.f)
+			return Math.sqrt(d.y); 
+			})
+        .outerRadius(function(d,i) { 
+			return 400
+			return outerRadiusScale(d.f)
+			return Math.sqrt(d.y + d.dy); });
+	var minAmount = 0
+	var maxH = 360
+	var minH = 0
+	var maxS = 1
+	var minS = 0.2
+	var maxL = .8
+	var minL = .2
+      //*************************************************
+      // GET THE CSV DATA
+      //*************************************************
+	  //var street = "teststreets/Bradbury Street.csv"
+	  //var street = "teststreets/Ashburton Place.csv"
+	  //var street = "teststreets/Edmunds Street.csv"
+	 //var street = "teststreets/Harwell Drive.csv"
+	  var street = "teststreets/Gracewook Park.csv"
+	  var street = "teststreets/Oak Street.csv"
+	  
+      d3.csv(street, function(error, data) {
+			
+		data = sortByS(filterByHSL(data))
+        _.each(data, function(element, index, list){
+            element.f = +element.f;
+			
+        });
+        //*************************************************
+        // FILTER AND SORTING
+        //*************************************************
+		function sortByS(input){
+			input.sort(function(a,b) {
+				var ahsl = d3.hsl(a["color"])
+				var bhsl = d3.hsl(b["color"])
+				//return ((ahsl["h"]+ahsl["s"]) - (bhsl["h"]+bhsl["s"]));
+				return ((ahsl["s"]+ahsl["l"]) - (bhsl["s"]+bhsl["l"]));
+				});
+			var output = input.reverse()
+			return output
+		}
+		function sortByAmount(input){
+			var  output = input.sort(function(a,b) {return (a["f"]) - (b["f"]);});
+			//output = input.reverse()
+			return output
+		}
+		function filterByRank(data){
+			var reducedData = []
+			sortByAmount(data)
+			reducedData = data.splice(1500, data.length-100)
+			return reducedData
+		}
+		function filterByAmount(data){
+			var reducedData = []
+			for(Color in data){
+				if(data[Color]["f"] > 100){
+					reducedData.push(data[Color])
+				}
+			}
+			console.log(data.length)
+			console.log(reducedData.length)
+			return reducedData
+		}
+		function filterByHSL(data){
+			var reducedData = []
+			for(Color in data){
+				//console.log(d3.hsl(data[Color]["color"])["s"])
+				var H = d3.hsl(data[Color]["color"])["h"]
+				var S = d3.hsl(data[Color]["color"])["s"]
+				var L = d3.hsl(data[Color]["color"])["l"]
+				if(H < maxH && H > minH && S < maxS && S > minS && L < maxL && L > minL){
+				reducedData.push(data[Color])
+				}
+			}
+			return reducedData
+		}
+		
+        //*************************************************
+        // THE FUNCTION
+        //*************************************************
+        function genJSON(csvData, groups) {
+			
+		
+          var genGroups = function(data) {
+            return _.map(data, function(element, index) {
+              return { name : index, children : element };
+            });
+          };
+
+          var nest = function(node, curIndex) {
+            if (curIndex === 0) {
+              node.children = genGroups(_.groupBy(csvData, groups[0]));
+              _.each(node.children, function (child) {
+                nest(child, curIndex + 1);
+              });
+            }
+            else {
+              if (curIndex < groups.length) {
+                node.children = genGroups(
+                  _.groupBy(node.children, groups[curIndex])
+                );
+                _.each(node.children, function (child) {
+                  nest(child, curIndex + 1);
+                });
+              }
+            }
+            return node;
+          };
+          return nest({}, 0);
+        }
+        //*************************************************
+        // CALL THE FUNCTION
+        //*************************************************
+        var preppedData = genJSON(data, ['color'])
+
+        //*************************************************
+        // LOAD THE PREPPED DATA IN D3
+        //*************************************************
+        var path = svg.datum(preppedData).selectAll("path")
+          .data(partition.nodes)
+        .enter().append("path")
+          .attr("display", function(d) { return d.depth ? null : "none"; }) // hide inner ring
+          .attr("d", arc)
+          .attr("class", function(d) { return (d.children ? d : d.parent).name; })
+          .style("fill", function(d) { 
+			  //console.log(d.color)
+			  if(d.color == undefined){
+				  return d.name
+			  }
+			  else{
+				  return d.color 
+				  }
+			})
+          .style("fill-rule", "evenodd")
+
+      });
+    </script>
+  </body>
+</html>

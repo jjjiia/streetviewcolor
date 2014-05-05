@@ -31,10 +31,25 @@ form {
 	top:20px;
 	color:#888;
 }
-
+svg{
+	margin-top:150px;
+}
+#current{
+	fill:#000;
+	color:#000;
+}
 </style>
 <div id="city">
-	<strong>Color Test</strong>
+	Color Test H:0 - 360; S: 0.2 - 1; L: 0.2 - 0.8
+	<div id = "DrPaul">Dr. Paul Dudley White Path.csv</div>
+	<div id = "Harwell">Harwell Drive.csv</div>
+	<div id = "Alewife">Alewife T Station Access Road.csv</div>
+	<div id = "Bradbury">Bradbury Street.csv</div>
+	<div id = "Buckingham">Buckingham Place.csv</div>
+	<div id = "Edmunds">Edmunds Street.csv</div>
+	<br/>
+	<div id = "current"></div>
+	
 </div>
 <script src="required/d3.v3.min.js"></script>
 <script src="required/jquery.min.js"></script>
@@ -63,19 +78,71 @@ var heightScale = d3.scale.linear()
 .domain([0,2000])
 .range([0,1000])
 
-var svg = d3.select("body").append("svg")
-	    .attr("width", width + margin.left + margin.right)
-	    .attr("height", height + margin.top + margin.bottom)
-	    .append("g")
-	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-var currentStreet = "Harwell Drive.csv"
-d3.csv(currentStreet, function(error, data) {
-		console.log(data.length)
-		var reducedData = filterDataTest(data)
-		console.log(reducedData.length)
-		drawRect(reducedData)
-});
+//var currentStreet = "Dr. Paul Dudley White Path.csv"
+var minAmount = 0
+var maxH = 360
+var minH = 0
+var maxS = 1
+var minS = 0.4
+var maxL = .8
+var minL = .2
+
+d3.selectAll("#Alewife")
+.on("click", function(d){
+	var street = "teststreets/Alewife T Station Access Road.csv"
+	drawAll(street)
+	d3.selectAll("svg").remove()
+	d3.select("#current").html(street)
+})
+d3.selectAll("#DrPaul")
+.on("click", function(d){
+	var street ="teststreets/Dr. Paul Dudley White Path.csv"
+	drawAll(street)
+	d3.selectAll("svg").remove()
+	d3.select("#current").html(street)
+	
+})
+d3.selectAll("#Harwell")
+.on("click", function(d){
+	var street ="teststreets/Harwell Drive.csv"
+	drawAll(street)
+	d3.selectAll("svg").remove()
+	d3.select("#current").html(street)
+	
+})
+d3.selectAll("#Bradbury")
+.on("click", function(d){
+	var street ="teststreets/Bradbury Street.csv"
+	drawAll(street)
+	d3.selectAll("svg").remove()
+	d3.select("#current").html(street)
+	
+})
+d3.selectAll("#Buckingham")
+.on("click", function(d){
+	var street ="teststreets/Buckingham Place.csv"
+	drawAll(street)
+	d3.selectAll("svg").remove()
+	d3.select("#current").html(street)
+	
+})
+d3.selectAll("#Edmunds")
+.on("click", function(d){
+	var street ="teststreets/Edmunds Street.csv"
+	drawAll(street)
+	d3.selectAll("svg").remove()
+	d3.select("#current").html(street)
+	
+})
+function drawAll(currentStreet){
+	d3.csv(currentStreet, function(error, data) {
+			console.log(data.length)
+			var reducedData = filterByHSL(data)
+			console.log(reducedData.length)
+			drawCircle(reducedData)
+	});
+}
 
 //FILTERS
 function filterDataTest(data){
@@ -93,11 +160,23 @@ function filterDataTest(data){
 function filterByAmount(data){
 	var reducedData = []
 	sortByAmount(data)
-	reducedData = data.splict(100, data.length-100)
+	reducedData = data.splice(100, data.length-100)
 	return reducedData
 		
 }
-
+function filterByHSL(data){
+	var reducedData = []
+	for(Color in data){
+		//console.log(d3.hsl(data[Color]["color"])["s"])
+		var H = d3.hsl(data[Color]["color"])["h"]
+		var S = d3.hsl(data[Color]["color"])["s"]
+		var L = d3.hsl(data[Color]["color"])["l"]
+		if(H < maxH && H > minH && S < maxS && S > minS && L < maxL && L > minL){
+		reducedData.push(data[Color])
+		}
+}
+	return reducedData
+}
 //SORTING
 function sortByAmount(input){
 	input.sort(function(a,b) {return (a["f"]) - (b["f"]);});
@@ -114,7 +193,7 @@ function sortByS(input){
 		var ahsl = d3.hsl(a["color"])
 		var bhsl = d3.hsl(b["color"])
 		//return ((ahsl["h"]+ahsl["s"]) - (bhsl["h"]+bhsl["s"]));
-		return ((ahsl["s"]) - (bhsl["s"]));
+		return ((ahsl["s"]+ahsl["l"]) - (bhsl["s"]+bhsl["l"]));
 		});
 	var output = input.reverse()
 	return output
@@ -122,11 +201,18 @@ function sortByS(input){
 
 //DRAWING
 function drawRect(reducedData){
+	console.log("rect")
+	var svg = d3.select("body").append("svg")
+		    .attr("width", width + margin.left + margin.right)
+		    .attr("height", height + margin.top + margin.bottom)
+		    .append("g")
+		    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	
 	sortByS(reducedData)
-	console.log(reducedData)
+	//console.log(reducedData)
 	var dataLength = reducedData.length
 	var squareSize = 2
-	var svgWidth = 200
+	var svgWidth = 500
 	svg.selectAll("rect")
 		.data(reducedData)
 		.enter()
@@ -153,6 +239,52 @@ function drawRect(reducedData){
 		})
 		.attr("opacity", function(d){
 			var f = d["f"]/10
+			return 1
+		})
+
+		
+	svg.selectAll("rect").on("click", function(d){
+		})
+}
+
+
+function drawCircle(reducedData){
+	var svg = d3.select("body").append("svg")
+		    .attr("width", width + margin.left + margin.right)
+		    .attr("height", height + margin.top + margin.bottom)
+		    .append("g")
+		    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	sortByS(reducedData)
+	//console.log(reducedData)
+	var dataLength = reducedData.length
+	var squareSize = 2
+	var svgWidth = 200
+	svg.selectAll("circle")
+		.data(reducedData)
+		.enter()
+		.append("circle")
+		.attr("fill","#fff")
+		.transition()
+		.duration(1000)
+		.delay(function(d,i){
+			return i
+		})
+		.attr("cx",function(d,i){
+			return i%svgWidth*squareSize*2
+			})
+		.attr("cy", function(d,i){
+			return parseInt(i/svgWidth)*squareSize*2
+		})
+		.attr("r", function(d,i){
+			return squareSize
+			//return d["f"]/1000
+		})
+		.attr("fill", function(d){
+			var Color = d["color"]
+			return Color
+		})
+		.attr("opacity", function(d){
+			var f = d["f"]/100
 			return 1
 		})
 

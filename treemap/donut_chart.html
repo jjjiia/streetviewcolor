@@ -47,7 +47,7 @@ var svg = d3.select("body").append("svg")
   .append("g")
     .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
-d3.csv("test.csv", function(error, data) {
+d3.csv("test2.csv", function(error, data) {
 	
 	console.log(data)
 	data.sort(function(a,b) {return (a["s"]+a["v"]) - (b["s"]+b["v"]);});
