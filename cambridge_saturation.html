@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Cambridge</title>
+		<script src="http://d3js.org/d3.v3.min.js"></script>
+		<script src="http://d3js.org/topojson.v1.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+		<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
+		<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+		<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+		<link rel="stylesheet" href="cambridge.css"/>
+    </head>
+    <body>
+		
+<div id = "title">Cambridge</div>
+
+<div id = "subtitle">
+	Saturation: Highest Saturation is more defined streets
+</div>
+<div id = "menu">
+<table>
+<tr>
+	<td><em>Filter By:</em></td>
+</tr>
+<tr>	
+	<td>Saturation</td>
+</tr>
+<tr>
+	<td>75% - 100%</td>
+</tr>
+<tr>	
+	<td>Layers:</td>
+	<td>Businesses (Checkbox)</td>
+</tr>
+<tr>
+	<td>Hues:</td>
+	<td>
+	</td>
+</tr>
+
+</table>
+</div>
+
+<div id = "mapContainer"></div>
+<script type="text/javascript">
+var w = 80;
+var h = 400;
+var padding = 40;
+var svg2;
+
+var dataset = null;
+var bounded_data = [];
+var svg;
+var projection;
+var geoJSON;
+var path;
+var lightBoxShown = false;
+var highlightHueMin = 75;
+var highlightHueMax = 100;
+//each group is 6 degrees
+
+var yScale = d3.scale.linear()
+	.domain([0,409600])
+	.range([h-20,10]);
+
+var currentFile = 'saturationCambridge/cambridge_all.csv'
+loadData(currentFile)
+
+function loadData(csv){
+	d3.json('BASEMAP_Roads.geojson',function(geojson){
+		geoJSON = geojson;
+		initializeSVG();
+				
+		d3.csv(csv, function(data){
+			dataset = data;
+			
+			bound_data();
+			generateMap();
+			});
+	})
+	
+}
+function bound_data(){
+	
+	bounded_data = [];
+	for(var i in dataset){
+		var frequency = dataset[i]["saturation"];
+		frequency = JSON.parse(frequency)
+		//console.log(frequency)
+		bounded_data.push(dataset[i])
+	}
+	//console.log(bounded_data,bounded_data.length);
+	$('#mapSVG').empty();
+	
+	generateMap();
+	drawPolygon();		
+}
+
+function initializeSVG(){
+	var w = 300;
+	var h = 400;
+	svg = d3.select("body")
+				.append("svg")
+				.attr("width", w)
+				.attr("height", h)
+				.attr("id", 'mapSVG')
+		   	 	.attr("class", "mapContainer");
+	//Define map projection
+	projection = d3.geo.mercator()
+   						   .center([-71.152628, 42.398479])
+						   .translate([w/2, h/2])
+						   .scale([500000]);
+	//Define path generator
+	path = d3.geo.path()
+					 .projection(projection);
+					 
+	svg2 = d3.select("#barchart")
+			.append("svg")
+			.attr("id",'barSVG')
+			.attr("width", w)
+			.attr("height", h);
+}
+var maxOffset = 300
+var rScale = d3.scale.linear()
+	.domain([0,50000])
+	.range([maxOffset,0]);
+
+			
+function generateMap(){
+	//console.log("generate map")
+	svg.selectAll("circle")
+	.data(dataset)
+	.enter()
+	.append("circle")
+	.attr("cx", function(d){
+		var projectedCx = projection([parseFloat(d.lng), parseFloat(d.lat)])[0];
+		//console.log("x", projectedCx)
+		return projectedCx
+	})
+	.attr("cy", function(d){
+		var values = JSON.parse(d["saturation"])
+		var sum = 0
+		for(var j=highlightHueMin; j<highlightHueMax;j++){
+			sum = sum + values[j]
+		}
+			var radius = rScale(sum)
+			
+			
+		var projectedCy = projection([parseFloat(d.lng), parseFloat(d.lat)])[1];
+		//return projectedCy
+		//console.log("y", projectedCy)
+		return projectedCy
+	})
+	.attr("r", function(d){
+	//	console.log(radius)
+	var values = JSON.parse(d["saturation"])
+	var sum = 0
+	for(var j=highlightHueMin; j<highlightHueMax;j++){
+		sum = sum + values[j]
+	}
+		var radius = rScale(sum)
+	//return radius*0.03
+	return .5
+	
+	})
+	//.attr("width", 1)
+	.attr("fill", "black")
+	.style("opacity", function(d,i){
+		return 1
+	})
+	.transition()
+	.duration(5000)
+	.delay(function(d,i){return i/10})
+	.attr("cy", function(d){
+		var values = JSON.parse(d["saturation"])
+		var sum = 0
+		for(var j=highlightHueMin; j<highlightHueMax;j++){
+			sum = sum + values[j]
+		}
+		//console.log(sum)
+		var radius = rScale(sum)
+			
+		var projectedCy = projection([parseFloat(d.lng), parseFloat(d.lat)])[1];
+		//return projectedCy
+		//console.log("y", projectedCy)
+		return projectedCy-radius+maxOffset
+	})
+};
+	
+function drawPolygon(){
+	var boroughs = svg.selectAll('.borough')
+	.append("g")
+	.data(geoJSON.features)
+	.enter()
+	.append('path')
+	.attr('class', 'borough')
+	.attr('fill', '#aaa')
+	.attr('fill-opacity', .1)
+	.attr('stroke', '#aaa')
+	.attr('stroke-opacity', .1)
+	.attr('d', path)
+	.on("click", function(d,i){
+	//console.log(d)
+	})
+}
+var hueStep = 20
+
+var svg = d3.select("body").append("svg:svg")
+    .attr("width", 200)
+    .attr("height", 200)
+	.attr("class", "gradient");
+
+for(var i =0, j = 0; i<360; i=i+hueStep){
+
+	generateGradient(i,i+hueStep, j)
+	j++
+}
+
+
+function generateGradient(minHue, maxHue, id){
+	var w = 20,
+	    h = 20;
+		
+	var minHueColor = d3.hsl(minHue,.5,.5)
+	var maxHueColor = d3.hsl(maxHue,.5,.5)
+		
+	
+
+	var gradient = svg.append("svg:defs")
+	  .append("svg:linearGradient")
+	    .attr("id", "gradient" + id)
+	    .attr("x1", "0%")
+	    .attr("y1", "0%")
+	    .attr("spreadMethod", "pad");
+
+	gradient.append("svg:stop")
+	    .attr("offset", "0%")
+	    .attr("stop-color", minHueColor)
+	    .attr("stop-opacity", 1);
+
+	gradient.append("svg:stop")
+	    .attr("offset", "100%")
+	    .attr("stop-color",  maxHueColor)
+	    .attr("stop-opacity", 1);
+
+	svg.append("svg:rect")
+		.attr("x", (minHue)%80*1.2)
+		.attr("y", parseInt(minHue/80)*hueStep*1.2)
+	    .attr("width",hueStep)
+	    .attr("height", hueStep)
+	    .style("fill", "url(#gradient" + id + ")")
+		.on("click", function(){
+			console.log(minHue, maxHue)
+			
+		});
+}
+
+	</script>
+    </body>
+</html>
