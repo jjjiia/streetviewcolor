@@ -79,7 +79,7 @@ function loadData(csv){
 		d3.csv(csv, function(data){
 			dataset = data;
 			bound_data();
-			generateMap(5,6, dataset);
+			generateMap(0,1, dataset);
 			});
 	})
 }
@@ -106,19 +106,21 @@ function initializeSVG(){
 			.attr("height", h);
 }
 
-function drawCircles(x,y,fill){
-	//console.log(x,y,fill)
-	var c=document.getElementById("myCanvas");
-	var ctx=c.getContext("2d");
-//	ctx.clearRect(x,y,900,700);	
+//function clearCircles(x,y,ctx){
+//	ctx.beginPath();
+//	ctx.fillStyle = "#fff";
+//	ctx.fillRect(x - 0.1, y - 0.1, x + 0.1, y + 0.1);
+//}
+
+function drawCircles(x,y,fill,alpha,ctx){
 	var centerX = x;
 	var centerY = y;
 	var radius = .2;
 	ctx.beginPath();
 	ctx.arc(centerX, centerY, radius, 0, 2, false);
 	ctx.fillStyle = fill;
+	ctx.globalAlpha=alpha;
 	ctx.fill();
-    
 }
 
 
@@ -135,38 +137,60 @@ function generateMap(minHue,maxHue,data){
 	var mapDataPoints = []
 	var maxOffset = 100
 	var rScale = d3.scale.sqrt()
-		.domain([0,200000])
+		.domain([0,20000])
 		.range([0,maxOffset]);
 	
-	var oScale = d3.scale.linear()
+	var oScale = d3.scale.sqrt()
 			.domain([0,50000])
-			.range([0,maxOffset]);
+			.range([.2,1]);
 
 	var projection = d3.geo.mercator()
-			.center([-71.109028, 42.388979])
+			.center([-71.109028, 42.383979])
 			.scale([400000]);
 			
-	for(point in data){
-		//console.log(data[point].lat)
-		//var projectedCx = projection([parseFloat(d.lng), parseFloat(d.lat)])[0];
-		var projectedCx = projection([data[point].lng, parseFloat(data[point].lat)])[0];
-		var projectedCy = projection([data[point].lng, parseFloat(data[point].lat)])[1];
-		var values = JSON.parse(data[point]["huegroup"])
-		var sum = 0
-		for(var j=highlightHueMin; j<highlightHueMax;j++){
-			sum = sum + values[j]
-		}
-		var offset =  oScale(sum)
-		var fill = middleHueColor
-		//console.log(fill)
-		var finalCy = projectedCy-(maxOffset-offset)
-		//console.log(projectedCx,finalCy,fill)
-		drawCircles(projectedCx,finalCy,middleHueColor)
-		
+	var c=document.getElementById("myCanvas");
+	var ctx=c.getContext("2d");
+	ctx.clearRect(0,0,900,700);
+	
+	var steps = 1
+	
+
+	ctx.clearRect(0,0,900,700);
+
+for(point in data) {
+	//var projectedCx = projection([parseFloat(d.lng), parseFloat(d.lat)])[0];
+	var projectedCx = projection([data[point].lng, parseFloat(data[point].lat)])[0];
+	var projectedCy = projection([data[point].lng, parseFloat(data[point].lat)])[1];
+	var values = JSON.parse(data[point]["huegroup"])
+	var sum = 0
+	for(var j=highlightHueMin; j<highlightHueMax;j++){
+		sum = sum + values[j]
+	}
+	var offset =  rScale(sum)
+	var fill = middleHueColor
+	//console.log(fill)
+	if(offset >= maxOffset){
+		offset = maxOffset
+	}
+	var actualOffset = maxOffset-offset
+	var finalCy = projectedCy+actualOffset
+	//console.log(projectedCx,finalCy,fill)
+	
+	
+	for(var i = 0; i < steps; i++){
+		(function(i, projectedCx, projectedCy, finalCy, sum, middleHueColor, ctx) {
+			setTimeout(function(){
+				var alpha = oScale(sum)
+				var stepValue = (projectedCy-finalCy)/steps*i
+				//clearCircles(projectedCx,projectedCy-stepValue,ctx)
+				drawCircles(projectedCx,finalCy,middleHueColor,alpha,ctx)
+			}, 10*i)
+		})(i, projectedCx, projectedCy, finalCy, sum, middleHueColor, ctx)
+	}
+}
 		//drawCircles(projectedCx,finalCy,fill)
 		//break
 		//mapDataPoints.push([projectedCx,finalCy,fill])
-	}
 	//console.log(mapDataPoints.length)
 	//return(mapDataPoints)
 //	svg.selectAll("circle")
@@ -284,8 +308,8 @@ function generateGradient(minHue, maxHue, id){
 	    .attr("stop-opacity", 1);
 
 	svg.append("svg:rect")
-		.attr("x", (minHue)%80*1.2)
-		.attr("y", parseInt(minHue/80)*hueStep*1.2)
+		.attr("x", (minHue)%120*1.2)
+		.attr("y", parseInt(minHue/120)*hueStep*1.2)
 	    .attr("width",hueStep)
 	    .attr("height", hueStep)
 	    .style("fill", "url(#gradient" + id + ")")
