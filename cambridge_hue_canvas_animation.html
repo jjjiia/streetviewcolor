@@ -186,13 +186,15 @@ for(var i =0; i < steps; i++){
 					//var offset =  oScale(sum)/steps*i
 					//var finalCy = projectedCy-(maxOffset-offset)
 				var stepValue = (projectedCy-finalCy)/steps*i
-	
-				drawCircles(projectedCx,projectedCy-stepValue,middleHueColor,alpha,ctx)
+				
+				
+				requestAnimationFrame(drawCircles(projectedCx,projectedCy-stepValue,middleHueColor,alpha,ctx))
 			}
 		
 		},10*i)
 	})(i)
 }
+
 		//drawCircles(projectedCx,finalCy,fill)
 		//break
 		//mapDataPoints.push([projectedCx,finalCy,fill])

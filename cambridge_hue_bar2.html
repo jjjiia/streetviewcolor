@@ -13,40 +13,27 @@
 		<script src="required/jquery-ui.min.js"></script>
 		<script src="required/underscore-min.js"></script>
 		
-		<link rel="stylesheet" href="cambridgeCanvas.css"/>
+		<link rel="stylesheet" href="cambridgeCanvas_forprint.css"/>
     </head>
     <body>
 		
 <div id = "title">Cambridge</div>
 
-<div id = "subtitle">
-	Dynamic Text Place Holder - Saturation: Highest Saturation is more defined streets
-</div>
 <div id = "menu">
 <table>
 <tr>
-	<td><em>Filter By:</em></td>
-</tr>
-<tr>	
-	<td>Saturation</td>
-</tr>
-<tr>
-	<td>75% - 100%</td>
-</tr>
-<tr>	
-	<td>Layers:</td>
-	<td>Businesses (Checkbox)</td>
-</tr>
-<tr>
-	<td>Hues:</td>
+	<td>This map shows the concentration of hues <br/>from Street View images in Cambridge MA</td>
 	<td>
 	</td>
+</tr>
+<tr>
+	<td><em>Filter By Hues:</em></td>
 </tr>
 
 </table>
 </div>
 
-<div id = "mapContainer"><canvas id="myCanvas" width="900" height="700"></canvas></div>
+<div id = "mapContainer"><canvas id="myCanvas" width="1400" height="1000"></canvas></div>
 <script type="text/javascript">
 var w = 80;
 var h = 400;
@@ -80,6 +67,9 @@ function loadData(csv){
 			dataset = data;
 			bound_data();
 			generateMap(0,1, dataset);
+			for(var i =0; i < 10; i++){
+				var barHeight = barGraph(i, i+1, dataset)	
+			}
 			});
 	})
 }
@@ -110,16 +100,13 @@ function drawCircles(x,y,fill,alpha,ctx){
 	//console.log(x,y,fill)
 	var centerX = x;
 	var centerY = y;
-	var radius = .2;
+	var radius = .5;
 	ctx.beginPath();
 	ctx.arc(centerX, centerY, radius, 0, 2, false);
 	ctx.fillStyle = fill;
 	ctx.fill();
     ctx.globalAlpha=alpha;
 }
-
-
-
 		
 function generateMap(minHue,maxHue,data){
 	//console.log("generate map")	
@@ -140,23 +127,15 @@ function generateMap(minHue,maxHue,data){
 			.range([.2,1]);
 
 	var projection = d3.geo.mercator()
-			.center([-71.109028, 42.383979])
-			.scale([400000]);
+			.center([-71.139028, 42.391979])
+			.scale([670000]);
 			
 	var c=document.getElementById("myCanvas");
 	var ctx=c.getContext("2d");
-	ctx.clearRect(0,0,900,700);
-	
-	var steps = 10
-	var start = null;
-	
-for(var i =0; i < steps; i++){
-	(function(i) {
-		setTimeout(function(){
-			ctx.clearRect(0,0,900,700);
-			console.log(i)
-			for(point in data) {
-	
+	ctx.clearRect(0,0,1400,1000);
+		
+		for(point in data) {
+				
 				//console.log(data[point].lat)
 				//var projectedCx = projection([parseFloat(d.lng), parseFloat(d.lat)])[0];
 				var projectedCx = projection([data[point].lng, parseFloat(data[point].lat)])[0];
@@ -185,14 +164,11 @@ for(var i =0; i < steps; i++){
 	
 					//var offset =  oScale(sum)/steps*i
 					//var finalCy = projectedCy-(maxOffset-offset)
-				var stepValue = (projectedCy-finalCy)/steps*i
+				var stepValue = (projectedCy-finalCy)
 	
 				drawCircles(projectedCx,projectedCy-stepValue,middleHueColor,alpha,ctx)
 			}
-		
-		},10*i)
-	})(i)
-}
+
 		//drawCircles(projectedCx,finalCy,fill)
 		//break
 		//mapDataPoints.push([projectedCx,finalCy,fill])
@@ -273,28 +249,44 @@ for(var i =0; i < steps; i++){
 //	//console.log(d)
 //	})
 //}
-var hueStep = 24;
+var hueStep = 36;
 
 var svg = d3.select("body").append("svg:svg")
-    .attr("width", 200)
+    .attr("width", 1000)
     .attr("height", 200)
 	.attr("class", "gradient");
 
-for(var i =0, j = 0; i<360; i=i+hueStep){
-	generateGradient(i,i+hueStep, j)
-	j++
-}
 
+var sumArray = []
+function barGraph(minHue, maxHue,data, id){
+		var highlightHueMax = maxHue*6
+		var highlightHueMin = minHue*6
+		for(point in data) {
+			var values = JSON.parse(data[point]["huegroup"])
+			var sum = 0
+			for(var j=highlightHueMin; j<highlightHueMax;j++){
+				sum = sum + values[j]
+		}
+	}
+	sumArray.push(sum)
+	//console.log(sumArray)
+	for(var i =0, j = 0; i<360; i=i+hueStep){
+		generateGradient(i,i+hueStep, j)
+		j++
+	}
+	return sumArray
+}
+var currentX = 0
 
 function generateGradient(minHue, maxHue, id){
 	var w = 20,
 	    h = 20;
-		
 	var minHueColor = d3.hsl(minHue,.5,.5)
 	var maxHueColor = d3.hsl(maxHue,.5,.5)
-		
 	
-
+	var widthScale = d3.scale.linear()
+	.domain([0,32000])
+	.range([24,200])
 	var gradient = svg.append("svg:defs")
 	  .append("svg:linearGradient")
 	    .attr("id", "gradient" + id)
@@ -313,17 +305,23 @@ function generateGradient(minHue, maxHue, id){
 	    .attr("stop-opacity", 1);
 
 	svg.append("svg:rect")
-		.attr("x", (minHue)%120*1.2)
-		.attr("y", parseInt(minHue/120)*hueStep*1.2)
-	    .attr("width",hueStep)
-	    .attr("height", hueStep)
+		.attr("x", function(){
+			currentX = currentX + widthScale(sumArray[(minHue/hueStep)])	
+			console.log(currentX)
+			return currentX
+		})
+		.attr("y", 0)
+	    .attr("width", function(){
+	    return widthScale(sumArray[minHue/hueStep])	
+	    })
+	    .attr("height", 18)
 	    .style("fill", "url(#gradient" + id + ")")
 		.on("click", function(){
 			minMapHue  = minHue/36
 			maxMapHue  = maxHue/36
 			//d3.selectAll("svg circle").remove()
 			generateMap(minMapHue, maxMapHue, dataset)
-			console.log(minHue, maxHue)
+			console.log(minHue, maxHue, sumArray[minHue/hueStep])
 		})
 }
 
