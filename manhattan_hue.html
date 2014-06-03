@@ -38,7 +38,7 @@
 	var lightBoxShown = false;
 	
 	//each group is 6 degrees
-	var highlightHueMin = 15;
+	var highlightHueMin = 20;
 	var highlightHueMax = 25;
 	
 	var minHueColor = d3.hsl(highlightHueMin*6,.5,.5)
@@ -53,7 +53,7 @@
 		geoJSON = geojson;
 		initializeSVG();
 				
-		d3.csv('cambridge_huegroups/cambridge_huegroups_1_23.csv', function(data){
+		d3.csv('manhattan_huegroups/manhattan_huegroups_all.csv', function(data){
 			dataset = data;
 			
 			bound_data();
@@ -128,9 +128,9 @@
 			   	 	.attr("class", "mapContainer");
 		//Define map projection
 		projection = d3.geo.mercator()
-	   						   .center([-71.152628, 42.395479])
+	   						   .center([-74.038428, 40.833144])
 							   .translate([w/2, h/2])
-							   .scale([600000]);
+							   .scale([600000]);;
 		//Define path generator
 		path = d3.geo.path()
 						 .projection(projection);
@@ -145,8 +145,8 @@
 	var hueDomainScale = highlightHueMax- highlightHueMin
 	
 	var rScale = d3.scale.linear()
-		.domain([0,80000*hueDomainScale])
-		.range([0,30]);
+		.domain([0,120000*hueDomainScale])
+		.range([0,12]);
 		
 				
 	function generateMap(){
@@ -180,16 +180,15 @@
 		})
 		//.attr("width", 1)
 		//.attr("width", 2)
-		.attr("fill",function(d){
+		.attr("fill",function(d,i){
 			var middleH = (highlightHueMax*6 + highlightHueMin*6)/2
 			return d3.hsl(middleH,.5,.5)
 			//return "#000"
 		})
-		.style("opacity", .2)
+		.style("opacity", 1);
 		.on("mouseover",function(d,i){
 			console.log("over")
 		})
-		;
 	};
 	
 	function drawPolygon(){
@@ -202,7 +201,7 @@
 		.attr('fill', 'white')
 		.attr('fill-opacity', 0.0)
 		.attr('stroke', 'black')
-		.attr('stroke-opacity', 0.5)
+		.attr('stroke-opacity', 0)
 		.attr('z-index', '10')
 		.attr('d', path);
 	}

@@ -38,8 +38,8 @@
 	var lightBoxShown = false;
 	
 	//each group is 6 degrees
-	var highlightHueMin = 15;
-	var highlightHueMax = 25;
+	var highlightHueMin = 0;
+	var highlightHueMax = 5;
 	
 	var minHueColor = d3.hsl(highlightHueMin*6,.5,.5)
 	var maxHueColor = d3.hsl(highlightHueMax*6,.5,.5)
@@ -53,9 +53,8 @@
 		geoJSON = geojson;
 		initializeSVG();
 				
-		d3.csv('cambridge_huegroups/cambridge_huegroups_1_23.csv', function(data){
+		d3.csv('manhattan_huegroups/manhattan_huegroups_all.csv', function(data){
 			dataset = data;
-			
 			bound_data();
 			generateMap();
 			});
@@ -76,7 +75,7 @@
 		
 		generateMap();
 		drawPolygon();
-		generateGradient()
+		//generateGradient()
 		
 	}
 
@@ -128,9 +127,9 @@
 			   	 	.attr("class", "mapContainer");
 		//Define map projection
 		projection = d3.geo.mercator()
-	   						   .center([-71.152628, 42.395479])
+	   						   .center([-74.038428, 40.833144])
 							   .translate([w/2, h/2])
-							   .scale([600000]);
+							   .scale([160000]);
 		//Define path generator
 		path = d3.geo.path()
 						 .projection(projection);
@@ -146,50 +145,55 @@
 	
 	var rScale = d3.scale.linear()
 		.domain([0,80000*hueDomainScale])
-		.range([0,30]);
+		.range([0,120]);
 		
 				
 	function generateMap(){
 		//console.log("generate map")
-		svg.selectAll("circle")
+		svg.selectAll("rect")
 		.data(dataset)
 		.enter()
-		.append("circle")
-		.attr("cx", function(d){
+		.append("rect")
+		.attr("x", function(d){
 			var projectedCx = projection([parseFloat(d.lng), parseFloat(d.lat)])[0];
 			//console.log("x", projectedCx)
 			return projectedCx
 		})
 		//.attr("cy", 20)
-		.attr("cy", function(d){
+		.attr("y", function(d){
 			var projectedCy = projection([parseFloat(d.lng), parseFloat(d.lat)])[1];
 			//return projectedCy
 			//console.log("y", projectedCy)
-			return projectedCy
+			var values = JSON.parse(d["huegroup"])
+			var sum = 0
+			var huearray = []
+			for(var j=highlightHueMin; j<highlightHueMax;j++){
+				sum = sum + values[j]
+			}
+				var radius = rScale(sum)
+			return projectedCy-radius
 		})
 		//.attr("r", 3)
-		.attr("r", function(d){
+		.attr("height", function(d){
 		//	console.log(radius)
 		var values = JSON.parse(d["huegroup"])
 		var sum = 0
+		var huearray = []
 		for(var j=highlightHueMin; j<highlightHueMax;j++){
 			sum = sum + values[j]
 		}
 			var radius = rScale(sum)
 			return radius
 		})
+		.attr("width", 1)
 		//.attr("width", 1)
 		//.attr("width", 2)
-		.attr("fill",function(d){
+		.attr("fill",function(d,i){
 			var middleH = (highlightHueMax*6 + highlightHueMin*6)/2
 			return d3.hsl(middleH,.5,.5)
 			//return "#000"
 		})
-		.style("opacity", .2)
-		.on("mouseover",function(d,i){
-			console.log("over")
-		})
-		;
+		.style("opacity", .1);
 	};
 	
 	function drawPolygon(){
@@ -202,7 +206,7 @@
 		.attr('fill', 'white')
 		.attr('fill-opacity', 0.0)
 		.attr('stroke', 'black')
-		.attr('stroke-opacity', 0.5)
+		.attr('stroke-opacity', 1)
 		.attr('z-index', '10')
 		.attr('d', path);
 	}

@@ -68,13 +68,12 @@ var currentFile = 'saturationCambridge/cambridge_all.csv'
 loadData(currentFile)
 
 function loadData(csv){
-	d3.json('BASEMAP_Roads.geojson',function(geojson){
+	d3.json('residential.geojson',function(geojson){
 		geoJSON = geojson;
 		initializeSVG();
 				
 		d3.csv(csv, function(data){
 			dataset = data;
-			
 			bound_data();
 			generateMap();
 			});

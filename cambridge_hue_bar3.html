@@ -22,10 +22,10 @@
 <div id = "menu">
 <table>
 <tr>
-	<td>Concentration of hue ranges from Street View images in Cambridge MA</td>
+	<td>Zoning Hue Distributions</td>
 </tr>
 <tr>
-	<td><em>Filter By Hues:</em></td>
+	<td><div id = "zone">zone</div></td>
 </tr>
 
 </table>
@@ -53,37 +53,62 @@ var highlightHueMax = 100;
 var yScale = d3.scale.linear()
 	.domain([0,409600])
 	.range([h-20,10]);
+	
+var residential = ["A-1", "A-2", "B", "C", "C-1", "C-1A", "C-2", "C-2A", "C-2B", "C-3", "C-3A","C-3B"]
+var office = ["O-1", "O-2", "O-2A", "O-3", "O-3A" ]
+var business = ["BA","BA-1","BA-2", "BA-3", "BB","BB-1", "BB-2", "BC", "BC-1"]
+var industry = ["IA-1", "IA-2", "IA", "IB-1", "IB-2", "IB", "IC"]
+var special = ["SD-1", "SD-2", "SD-3", "SD-4", "SD-4A", "SD-5", "SD-6", "SD-7", "SD-8", "SD-8A", "SD-9", "SD-10(F)", "SD-10(H)", "SD-11", "SD-12", "SD-13", "SD-14", "SD-15"]
+var openspace = ["OS"]
+var mixuse = ["MXD"]
+var cambridgePort = ["CRDD"]
 
-var currentFile = 'cambridge_huegroups/cambridge_huegroups_1_23.csv'
+var setback20 = ["A-2"]
+var setback15 = ["B"]
+var setback10 = ["C-1A", "C", "C-1", "C-2", "C-2B", "C-3B", "O-1", "O-2", "O-2A", "BA-3"]
+var setback5 = ["BA-2", "O-3A", "O-3", "C-3", "C-3A", "C-2A"]
+var setback25 = ["A-1", "OS"]
+var setback0 = ["IC", "IB", "IB-1", "IA", "IA-2", "IA-1", "BC-1", "BC", "BB-2", "BB-1", "BB", "BA-1", "BA"]
+var BOI = ["O-1", "O-2", "O-2A", "O-3", "O-3A","BA","BA-1","BA-2", "BA-3", "BB","BB-1", "BB-2", "BC", "BC-1","IA-1", "IA-2", "IA", "IB-1", "IB-2", "IB", "IC"]
+
+var currentFile = "new_neighborhoods.csv"
 loadData(currentFile)
 
+var zoneNumber = "17"
+
+d3.selectAll("#zone").html("Business, Office, and Industry")
+
 function loadData(csv){
-	d3.json('zoning.geojson',function(geojson){
+	d3.json('residential.geojson',function(geojson){
 		geoJSON = geojson;
 		initializeSVG();
 		drawPolygon();		
 			
 		d3.csv(csv, function(data){
 			dataset = data;
-			bound_data();
-			generateMap(0,1, dataset);
+			//console.log(data)
+			dataset = bound_data();
+			//generateMap(0,1, dataset);
 			for(var i =0; i < 10; i++){
-				var barHeight = barGraph(i, i+1, dataset)	
+				var barHeight = barGraph(i, i+1, dataset)
 			}
 			});
 	})
 }
 function bound_data(){
-	
 	bounded_data = [];
 	for(var i in dataset){
+		var currentzone = dataset[i]["zone"]
 		var frequency = dataset[i]["huegroup"];
 		frequency = JSON.parse(frequency)
-		bounded_data.push(dataset[i])
+		//if (currentZone.indexOf(currentzone) >=0){
+		if (currentzone == zoneNumber){
+			bounded_data.push(dataset[i])
+		}
 	}
 	//console.log(bounded_data,bounded_data.length);
 	$('#mapSVG').empty();
-	
+	return bounded_data
 //	drawPolygon();		
 }
 
@@ -100,7 +125,7 @@ function initializeSVG(){
 	projection = d3.geo.mercator()
 				   .center([-71.152628, 42.398479])
 				   .translate([w/2, h/2])
-				   .scale([500000]);
+				   .scale([200000]);
 				   
 	//Define path generator
 	path = d3.geo.path()
@@ -113,13 +138,13 @@ function initializeSVG(){
 			.attr("height", 1000);
 }
 
-function drawCircles(x,y,fill,alpha,ctx){
+function drawCircles(x,y,fill,alpha,ctx,r){
 	//console.log(x,y,fill)
 	var centerX = x;
 	var centerY = y;
-	var radius = .5;
+	var radius = r;
 	ctx.beginPath();
-	ctx.arc(centerX, centerY, radius, 0, 2, false);
+	ctx.arc(centerX, centerY, radius, 0, 2*Math.PI, false);
 	ctx.fillStyle = fill;
 	ctx.fill();
     ctx.globalAlpha=alpha;
@@ -153,14 +178,14 @@ function generateMap(minHue,maxHue,data){
 	ctx.clearRect(0,0,1400,1000);
 		
 		for(point in data) {
-				
-				//console.log(data[point].lat)
+			//console.log(data[point])
 				//var projectedCx = projection([parseFloat(d.lng), parseFloat(d.lat)])[0];
 				var projectedCx = projection([data[point].lng, parseFloat(data[point].lat)])[0];
 				var projectedCy = projection([data[point].lng, parseFloat(data[point].lat)])[1];
 				var values = JSON.parse(data[point]["huegroup"])
 				var sum = 0
 				for(var j=highlightHueMin; j<highlightHueMax;j++){
+					
 					sum = sum + values[j]
 				}
 				var offset =  rScale(sum)
@@ -172,8 +197,19 @@ function generateMap(minHue,maxHue,data){
 				var actualOffset = maxOffset-offset
 				var finalCy = projectedCy+actualOffset
 				//console.log(projectedCx,finalCy,fill)
-	
-				var alpha = (oScale(sum))
+				var zone = data[point].zone
+				var alpha;
+				//if(industry.indexOf(zone) >= 0 || business.indexOf(zone) >= 0 || office.indexOf(zone) >= 0){
+				if(residential.indexOf(zone) >= 0){
+				
+				//if(residential.indexOf(zone) >= 0){
+					alpha = (oScale(sum))
+					
+				}else{
+					alpha = 0;
+				}
+				
+				
 				//drawCircles(projectedCx,finalCy,middleHueColor,alpha,ctx)
 				//setTimeout(drawCircles(projectedCx,projectedCy-(maxOffset-offset)/2,middleHueColor),1000)
 				//setTimeout(drawCircles(projectedCx,projectedCy-(maxOffset-offset),middleHueColor),2000)
@@ -182,19 +218,17 @@ function generateMap(minHue,maxHue,data){
 	
 					//var offset =  oScale(sum)/steps*i
 					//var finalCy = projectedCy-(maxOffset-offset)
-				var stepValue = (projectedCy-finalCy)
-	
-				drawCircles(projectedCx,projectedCy-stepValue,middleHueColor,alpha,ctx)
+				var stepValue = (projectedCy-finalCy)*-1
+				var r = 0.5;
+				//var r = 1
+				//drawCircles(projectedCx,projectedCy,middleHueColor,alpha,ctx,r)
+				//drawCircles(projectedCx,projectedCy,middleHueColor,alpha,ctx,r)
+				drawCircles(projectedCx,projectedCy+stepValue,middleHueColor,alpha,ctx,r)
 			}
 
 
 };
 //http://www.cambridgema.gov/~/media/Files/CDD/Maps/Zoning/cddmap_zoning_base_11x17.ashx
-var residential = ["A-1", "A-2", "B", "C", "C-1", "C-1A", "C-2", "C-2A", "C-2B", "C-3", "C-3A","C-3B"]
-var office = ["O-1", "O-2", "O-2A", "O-3", "O-3A" ]
-var business = ["BA","BA-1","BA-2", "BA-3", "BB","BB-1", "BB-2", "BC", "BC-1"]
-var industry = ["IA-1", "IA-2", "IA", "IB-1", "IB-2", "IB", "IC"]
-var special = ["SD-1"]
 
 function drawPolygon(){
 
@@ -206,8 +240,9 @@ function drawPolygon(){
 	.attr('class', 'borough')
 	.attr('stroke', function(d,i){
 		return "black"
-		var zone = d.properties.ZONE_TYPE
-		if(residential.indexOf(zone) >= 0){
+		var zone = d.properties.DISTRICT
+		//if(currentZone.indexOf(zone) >= 0){
+		if (currentzone == zoneNumber){
 			return "#000"
 		}
 		//else if(office.indexOf(zone) >= 0){
@@ -219,15 +254,18 @@ function drawPolygon(){
 		//else if(industry.indexOf(zone) >= 0){
 		//	return "green"
 		//}
-		else{
-			return "white"
+		else{ 
+			return "#000"
 		}
 	})
-	.attr('fill', "white")
+	.attr('fill', "black")
 	.attr('fill-opacity', function(d,i){
-		var zone = d.properties.ZONE_TYPE
-		if(residential.indexOf(zone) >= 0){
-			return 0
+		var zone = d.properties.DISTRICT
+		if (zone == zoneNumber){
+		
+		//if(industry.indexOf(zone) >= 0 || business.indexOf(zone) >= 0 || office.indexOf(zone) >= 0){
+		//	if (currentZone.indexOf(zone) >= 0 ){
+			return .8
 		}
 		//else if(office.indexOf(zone) >= 0){
 		//	return "red"
@@ -239,14 +277,14 @@ function drawPolygon(){
 		//	return "green"
 		//}
 		else{
-			return 1
+			return 0
 		}
 	})
-	.attr('stroke-opacity', 1)
+	.attr('stroke-opacity', .1)
 	.attr('d', path)
 	.on("mouseover", function(d,i){
-	var zone = d.properties.ZONE_TYPE
-	console.log(zone)
+	var zone = d.properties.DISTRICT
+	//console.log(zone)
 	})
 }
 
@@ -277,6 +315,7 @@ function barGraph(minHue, maxHue,data, id){
 		generateGradient(i,i+hueStep, j)
 		j++
 	}
+	console.log(sumArray)
 	return sumArray
 }
 
@@ -289,6 +328,11 @@ function generateGradient(minHue, maxHue, id){
 	var widthScale = d3.scale.linear()
 	.domain([0,32000])
 	.range([24,200])
+	
+	var currentSum = 0
+	for( var k = 0; k < sumArray.length; k++){
+		currentSum = currentSum + sumArray[k]
+	}
 	
 	var gradient = svg.append("svg:defs")
 	  .append("svg:linearGradient")
